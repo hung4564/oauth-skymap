@@ -73,8 +73,8 @@
     ]
   },
   "prettier": {
-    "semi": false,
-    "singleQuote": true
+    "semi": true,
+    "singleQuote": false
   },
   "commitlint": {
     "extends": [
