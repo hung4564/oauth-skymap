@@ -25,11 +25,38 @@ export class AuthUtils {
         try {
           if (!popupWindow.closed) {
             const redirectUrl = this.config.redirect_url;
-            AuthDebug.log("utilt -> openpopup -> redirectUrl", redirectUrl);
-            AuthDebug.log("utilt -> openpopup -> popup.href", popupWindow.location.href);
             if (popupWindow.location.href.indexOf(redirectUrl) !== 0) return;
             const returnurl = popupWindow.location.href;
             popupWindow.close();
+            resolve(returnurl);
+          }
+          clearInterval(checker);
+          setTimeout(resolve);
+        } catch (e) {}
+      }, 100);
+    });
+  }
+  openNewTab(url: string, name = "oauth"): Promise<string> {
+    AuthDebug.log("utilt -> openpopup ->url");
+    const tabWindow = window.open(url, "_blank");
+    if (!tabWindow) {
+      return Promise.reject(
+        new ReferenceError(
+          "We were unable to open the new tab, its likely that the request was blocked."
+        )
+      );
+    }
+
+    tabWindow.name = name;
+    tabWindow.focus();
+    return new Promise(resolve => {
+      const checker = setInterval(() => {
+        try {
+          if (!tabWindow.closed) {
+            const redirectUrl = this.config.redirect_url;
+            if (tabWindow.location.href.indexOf(redirectUrl) !== 0) return;
+            const returnurl = tabWindow.location.href;
+            tabWindow.close();
             resolve(returnurl);
           }
           clearInterval(checker);

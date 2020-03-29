@@ -6,5 +6,5 @@ const oauth = new Oauth("https://github.com/login", {
 });
 let btnlogin = document.getElementById("login");
 btnlogin.addEventListener("click", () => {
-  oauth.loginWithPopup()
+  oauth.login();
 });

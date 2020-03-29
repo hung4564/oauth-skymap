@@ -44,6 +44,25 @@ export default class Oauth {
     });
     return this.promises.login;
   }
+  loginWithNewTab() {
+    if (this.promises.login) {
+      return this.promises.login;
+    }
+    this.profile.clear();
+    this.promises.login = this.util.openNewTab(this.getloginUrl()).then(callbackUrl => {
+      this.promises.login = null;
+      this.profile.parseParams(callbackUrl);
+      const response = this.profile.code;
+      return response;
+    });
+    return this.promises.login;
+  }
+  login() {
+    return this.loginWithPopup().catch(e => {
+      this.promises.login = null;
+      return this.loginWithNewTab();
+    });
+  }
 }
 export const epoch = function() {
   return Math.round(new Date().getTime() / 1000.0).toString();
