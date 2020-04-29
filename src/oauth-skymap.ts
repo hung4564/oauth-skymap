@@ -1,18 +1,17 @@
 // Import here Polyfills if needed. Recommended core-js (npm i -D core-js)
 // import "core-js/fn/array.find"
 // ...
+import { LoaderFactory, TypeFLoaderEnum } from "./loader";
 import { IConfig } from "./models";
 import { AuthProfile } from "./profile";
-import { AuthUtils } from "./utils";
+import { AuthDebug, createUrl } from "./utils";
 export default class Oauth {
   config: IConfig;
-  util: AuthUtils;
   profile: AuthProfile;
   promises: { login?: Promise<any> | null };
   listeners: any;
   constructor(public providerUrl: string, config: IConfig) {
     this.config = config;
-    this.util = new AuthUtils(this.config);
     this.profile = new AuthProfile({ storageType: "local" });
     this.promises = {};
     this.listeners = {};
@@ -23,7 +22,7 @@ export default class Oauth {
   getloginUrl() {
     this.profile.localState = epoch();
     let authorizeEndpoint = `${this.providerUrl}/oauth/authorize`;
-    return this.util.createUrl(authorizeEndpoint, {
+    return createUrl(authorizeEndpoint, {
       state: this.profile.localState,
       response_type: this.config.response_type,
       redirect_uri: this.config.redirect_url,
@@ -31,37 +30,36 @@ export default class Oauth {
       scope: this.config.scope
     });
   }
-  loginWithPopup() {
+  login(type: TypeFLoaderEnum) {
+    const loader = LoaderFactory.getLoader(type);
     if (this.promises.login) {
       return this.promises.login;
     }
     this.profile.clear();
-    this.promises.login = this.util.openPopup(this.getloginUrl()).then(callbackUrl => {
-      this.promises.login = null;
-      this.profile.parseParams(callbackUrl);
-      const response = this.profile.code;
-      return response;
-    });
+    this.promises.login = loader(this.getloginUrl(), this.config)
+      .execute()
+      .then(callbackUrl => {
+        AuthDebug.log("callbackUrl", callbackUrl);
+        this.promises.login = null;
+        this.profile.parseParams(callbackUrl);
+        const response = this.profile.code;
+        return response;
+      });
     return this.promises.login;
   }
-  loginWithNewTab() {
-    if (this.promises.login) {
-      return this.promises.login;
+  callback(data: any) {
+    let response = null;
+    if (typeof data === "object") {
+      response = data;
+    } else if (typeof data === "string") {
+      this.profile.parseParams(data);
+    } else if (typeof data === "undefined") {
+      this.profile.parseParams(window.location.href);
+    } else {
+      // no response provided.
+      return;
     }
-    this.profile.clear();
-    this.promises.login = this.util.openNewTab(this.getloginUrl()).then(callbackUrl => {
-      this.promises.login = null;
-      this.profile.parseParams(callbackUrl);
-      const response = this.profile.code;
-      return response;
-    });
-    return this.promises.login;
-  }
-  login() {
-    return this.loginWithPopup().catch(e => {
-      this.promises.login = null;
-      return this.loginWithNewTab();
-    });
+    AuthDebug.log("Receving response in callback", response);
   }
 }
 export const epoch = function() {

@@ -1,4 +1,4 @@
-import { AuthDebug } from "./utils";
+import { AuthDebug, getResponseFromURL } from "./utils";
 
 export class AuthProfile {
   get tokenType() {
@@ -109,13 +109,11 @@ export class AuthProfile {
   }
   parseParams(callbackUrl: string) {
     if (callbackUrl) {
-      const params = callbackUrl.split("?")[1].split("&");
+      const params = getResponseFromURL(callbackUrl);
 
       AuthDebug.log(`Hash detected, parsing...`, params);
-      for (let i = 0; i < params.length; i++) {
-        const param = params[i];
-        const [key, value] = param.split("=");
-        this.parse(key, decodeURIComponent(value));
+      for (const property in params) {
+        this.parse(property, params[property]);
       }
       AuthDebug.log(`Removing hash...`);
       history.pushState(
