@@ -83,6 +83,9 @@ export default class Oauth {
       .then(callbackUrl => {
         AuthDebug.log("callbackUrl", callbackUrl);
         return this.callback(callbackUrl);
+      })
+      .finally(() => {
+        this.promises.login = null;
       });
     return this.promises.login;
   }
@@ -99,7 +102,7 @@ export default class Oauth {
       return;
     }
     if (this.store.state != this.store.localState) {
-      // this.profile.clear();
+      this.store.clear();
       throw new ReferenceError("Invaild request");
     }
     AuthDebug.log("Receving response in callback", response);
