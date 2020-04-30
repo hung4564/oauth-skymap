@@ -4,7 +4,7 @@
 import { AuthorizationCodeGrant, IGrant } from "./grant";
 import { LoaderFactory, TypeFLoaderEnum } from "./loader";
 import { IConfig, IOauthOption } from "./models";
-import { AuthProfile } from "./profile";
+import { AuthStore } from "./store";
 import { AuthDebug, createUrl, epoch } from "./utils";
 export const defaultOauthOption: IOauthOption = {
   providerUrl: "http://localhost:8000",
@@ -12,7 +12,7 @@ export const defaultOauthOption: IOauthOption = {
 };
 export default class Oauth {
   config!: IConfig;
-  profile: AuthProfile;
+  store: AuthStore;
   promises: { login?: Promise<any> | null };
   listeners: any;
   private grants: IGrant[] = [];
@@ -22,7 +22,7 @@ export default class Oauth {
     if (!config) {
       throw new ReferenceError("A config must be provided.");
     }
-    this.profile = new AuthProfile({ storageType: "local" });
+    this.store = new AuthStore({ storageType: "local" });
     this.promises = {};
     this.listeners = {};
     this.setOption(option);
@@ -30,7 +30,7 @@ export default class Oauth {
     this.setConfig(config);
   }
   setDefaultGrant() {
-    this.grants.push(new AuthorizationCodeGrant(this.profile, this.providerUrl));
+    this.grants.push(new AuthorizationCodeGrant(this.store, this.providerUrl));
   }
   setGrant(grant: IGrant) {
     this.grants.push(grant);
@@ -47,10 +47,10 @@ export default class Oauth {
     this._grant = this.getGrantHandle();
   }
   getloginUrl() {
-    this.profile.localState = epoch();
+    this.store.localState = epoch();
     let authorizeEndpoint = `${this.providerUrl}/oauth/authorize`;
     return createUrl(authorizeEndpoint, {
-      state: this.profile.localState,
+      state: this.store.localState,
       response_type: this.config.response_type,
       redirect_uri: this.config.redirect_url,
       client_id: this.config.client_id,
@@ -73,7 +73,7 @@ export default class Oauth {
       return this.promises.login;
     }
     const loader = this.getLoaderHandle(type);
-    this.profile.clear();
+    this.store.clear();
     this.promises.login = loader(this._grant.getloginUrl(), this.config)
       .execute()
       .then(callbackUrl => {
@@ -87,20 +87,20 @@ export default class Oauth {
     if (typeof data === "object") {
       response = data;
     } else if (typeof data === "string") {
-      response = this.profile.parseParams(data);
+      response = this.store.parseParams(data);
     } else if (typeof data === "undefined") {
-      response = this.profile.parseParams(window.location.href);
+      response = this.store.parseParams(window.location.href);
     } else {
       // no response provided.
       return;
     }
-    if (this.profile.state != this.profile.localState) {
+    if (this.store.state != this.store.localState) {
       // this.profile.clear();
       throw new ReferenceError("Invaild request");
     }
     AuthDebug.log("Receving response in callback", response);
     const result = await this._grant.handleResponse(response);
-    this.profile.clear();
+    this.store.clear();
     return result;
   }
 }

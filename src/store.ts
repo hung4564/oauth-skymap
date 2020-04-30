@@ -1,6 +1,6 @@
 import { AuthDebug, getResponseFromURL } from "./utils";
 
-export class AuthProfile {
+export class AuthStore {
   get tokenType() {
     return this.getItem("auth.token-type");
   }
@@ -151,4 +151,4 @@ export class AuthProfile {
   }
 }
 type StorageType = "local" | "session";
-export default AuthProfile;
+export default AuthStore;
