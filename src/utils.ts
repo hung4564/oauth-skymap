@@ -6,7 +6,7 @@ export class AuthDebug {
     }
   }
 }
-export function createUrl(baseUrl: string, queryParams: { [key: string]: string } = {}) {
+export function createUrl(baseUrl: string, queryParams: { [key: string]: any } = {}) {
   let url = baseUrl;
   Object.keys(queryParams).forEach(key => {
     const value = queryParams[key];

@@ -3,8 +3,15 @@ export interface IConfig {
   client_id: string;
   redirect_url: string;
   scope: string;
+  client_secret?: string;
 }
 export interface IOauthOption {
   providerUrl: string;
   debug: boolean;
+}
+export interface IResponse {
+  access_token: string;
+  refresh_token?: string;
+  token_type: "Bearer";
+  expires_in: string;
 }
