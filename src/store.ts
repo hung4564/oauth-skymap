@@ -150,5 +150,5 @@ export class AuthStore {
     }
   }
 }
-type StorageType = "local" | "session";
+export type StorageType = "local" | "session";
 export default AuthStore;

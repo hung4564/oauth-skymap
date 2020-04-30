@@ -1,5 +1,5 @@
 import { IConfig, IResponse } from "../models";
-import AuthProfile from "../profile";
+import AuthStore from "../store";
 
 export interface IGrant {
   canHandleResponse(data: IResponse): boolean;
@@ -12,7 +12,7 @@ export interface IGrant {
 }
 export abstract class AGrant implements IGrant {
   protected config!: IConfig;
-  constructor(protected _profile: AuthProfile, protected providerUrl: string) {}
+  constructor(protected _store: AuthStore, protected providerUrl: string) {}
   abstract canHandleResponse(data: IResponse): boolean;
   abstract handleResponse(data: IResponse): Promise<IResponse>;
   abstract canHandleRequest(config: IConfig): boolean;

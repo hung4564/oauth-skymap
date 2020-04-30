@@ -1,3 +1,5 @@
+import { StorageType } from "../store";
+
 export interface IConfig {
   response_type: string;
   client_id: string;
@@ -8,10 +10,11 @@ export interface IConfig {
 export interface IOauthOption {
   providerUrl: string;
   debug: boolean;
+  storageType: StorageType;
 }
 export interface IResponse {
   access_token: string;
   refresh_token?: string;
   token_type: "Bearer";
-  expires_in: string;
+  expires_in: number;
 }

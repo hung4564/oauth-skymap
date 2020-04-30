@@ -1,6 +1,7 @@
 // Import here Polyfills if needed. Recommended core-js (npm i -D core-js)
 // import "core-js/fn/array.find"
 // ...
+import AuthProfile from "./auth";
 import { AuthorizationCodeGrant, IGrant } from "./grant";
 import { LoaderFactory, TypeFLoaderEnum } from "./loader";
 import { IConfig, IOauthOption } from "./models";
@@ -8,13 +9,14 @@ import { AuthStore } from "./store";
 import { AuthDebug, createUrl, epoch } from "./utils";
 export const defaultOauthOption: IOauthOption = {
   providerUrl: "http://localhost:8000",
-  debug: true
+  debug: true,
+  storageType: "local"
 };
 export default class Oauth {
   config!: IConfig;
-  store: AuthStore;
-  promises: { login?: Promise<any> | null };
-  listeners: any;
+  store!: AuthStore;
+  private promises: { login?: Promise<any> | null };
+  auth: AuthProfile;
   private grants: IGrant[] = [];
   public providerUrl: string = "";
   private _grant!: IGrant;
@@ -22,9 +24,8 @@ export default class Oauth {
     if (!config) {
       throw new ReferenceError("A config must be provided.");
     }
-    this.store = new AuthStore({ storageType: "local" });
     this.promises = {};
-    this.listeners = {};
+    this.auth = new AuthProfile({ providerUrl: option.providerUrl });
     this.setOption(option);
     this.setDefaultGrant();
     this.setConfig(config);
@@ -41,6 +42,9 @@ export default class Oauth {
     this.providerUrl = option.providerUrl;
     this.grants.forEach(grant => grant.setProviderUrl(this.providerUrl));
     AuthDebug.isDebug = option.debug;
+    if (this.store) this.store.clear();
+    this.store = new AuthStore({ storageType: option.storageType });
+    this.auth.setConfig({ providerUrl: option.providerUrl });
   }
   setConfig(config: IConfig) {
     this.config = Object.assign({}, config);
@@ -100,6 +104,7 @@ export default class Oauth {
     }
     AuthDebug.log("Receving response in callback", response);
     const result = await this._grant.handleResponse(response);
+    this.auth.setToken(result);
     this.store.clear();
     return result;
   }

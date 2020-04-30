@@ -30,10 +30,10 @@ export class AuthorizationCodeGrant extends AGrant {
     return response.hasOwnProperty("code");
   }
   getloginUrl() {
-    this._profile.localState = epoch();
+    this._store.localState = epoch();
     let authorizeEndpoint = `${this.providerUrl}/oauth/authorize`;
     return createUrl(authorizeEndpoint, {
-      state: this._profile.localState,
+      state: this._store.localState,
       response_type: this.config.response_type,
       redirect_uri: this.config.redirect_url,
       client_id: this.config.client_id,
