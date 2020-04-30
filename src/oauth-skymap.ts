@@ -2,19 +2,33 @@
 // import "core-js/fn/array.find"
 // ...
 import { LoaderFactory, TypeFLoaderEnum } from "./loader";
-import { IConfig } from "./models";
+import { IConfig, IOauthOption } from "./models";
 import { AuthProfile } from "./profile";
-import { AuthDebug, createUrl } from "./utils";
+import { AuthDebug, createUrl, epoch } from "./utils";
+export const defaultOauthOption: IOauthOption = {
+  providerUrl: "http://localhost:8000",
+  debug: true
+};
 export default class Oauth {
   config: IConfig;
   profile: AuthProfile;
   promises: { login?: Promise<any> | null };
   listeners: any;
-  constructor(public providerUrl: string, config: IConfig) {
+  public providerUrl: string = "";
+  constructor(config: IConfig, option: IOauthOption = defaultOauthOption) {
+    if (!config) {
+      throw new ReferenceError("A config must be provided.");
+    }
     this.config = config;
     this.profile = new AuthProfile({ storageType: "local" });
     this.promises = {};
     this.listeners = {};
+    this.setOption(option);
+  }
+  setOption(option: IOauthOption) {
+    AuthDebug.log("Set Oauth Option", option);
+    this.providerUrl = option.providerUrl;
+    AuthDebug.isDebug = option.debug;
   }
   configure(config: IConfig) {
     this.config = Object.assign(this.config, config);
@@ -52,9 +66,9 @@ export default class Oauth {
     if (typeof data === "object") {
       response = data;
     } else if (typeof data === "string") {
-      this.profile.parseParams(data);
+      response = this.profile.parseParams(data);
     } else if (typeof data === "undefined") {
-      this.profile.parseParams(window.location.href);
+      response = this.profile.parseParams(window.location.href);
     } else {
       // no response provided.
       return;
@@ -62,6 +76,3 @@ export default class Oauth {
     AuthDebug.log("Receving response in callback", response);
   }
 }
-export const epoch = function() {
-  return Math.round(new Date().getTime() / 1000.0).toString();
-};

@@ -4,3 +4,7 @@ export interface IConfig {
   redirect_url: string;
   scope: string;
 }
+export interface IOauthOption {
+  providerUrl: string;
+  debug: boolean;
+}

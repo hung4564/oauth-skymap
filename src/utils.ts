@@ -44,3 +44,7 @@ export function parseQueryString(qs: string) {
 
   return urlParams;
 }
+
+export const epoch = function() {
+  return Math.round(new Date().getTime() / 1000.0).toString();
+};

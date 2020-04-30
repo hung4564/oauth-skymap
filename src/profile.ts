@@ -121,6 +121,7 @@ export class AuthProfile {
         document.title,
         location.href.replace(location.search, "").replace(location.hash, "")
       );
+      return params;
     }
   }
   parse(key: string, value: string) {
