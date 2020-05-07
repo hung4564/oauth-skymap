@@ -1,3 +1,4 @@
+import { AuthDebug } from "../utils";
 import { ALoader, IOption } from "./ALoader";
 
 export class PopupLoader extends ALoader {
@@ -26,8 +27,10 @@ export class PopupLoader extends ALoader {
         try {
           if (!popupWindow.closed) {
             const redirectUrl = this.config.redirect_url;
+            AuthDebug.log("redirectUrl popup", popupWindow.location);
             if (popupWindow.location.href.indexOf(redirectUrl) !== 0) return;
             const returnurl = popupWindow.location.href;
+            AuthDebug.log("returnurl popup", returnurl);
             popupWindow.close();
             resolve(returnurl);
           }

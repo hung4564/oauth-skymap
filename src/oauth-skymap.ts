@@ -69,7 +69,7 @@ export default class Oauth {
     grant.setConfig(this.config);
     return grant;
   }
-  getLoaderHandle(type: TypeFLoaderEnum = "popup") {
+  getLoaderHandle(type: TypeFLoaderEnum = "httpredirect") {
     return LoaderFactory.getLoader(type);
   }
   login(type: TypeFLoaderEnum) {
