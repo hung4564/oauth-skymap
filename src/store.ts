@@ -27,7 +27,7 @@ export class AuthStore {
     return expiration ? Number(expiration) : null;
   }
   set expiration(expiration) {
-    this.saveItem("auth.token.expiration", expiration?.toString());
+    this.saveItem("auth.token.expiration", expiration + "");
   }
 
   get accessToken() {

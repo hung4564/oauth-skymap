@@ -18,7 +18,8 @@ export class AuthorizationCodeGrant extends AGrant {
       let verifier = this._store.verifier;
       tokenRequest = {
         ...tokenRequest,
-        code_verifier: base64URLEncode(verifier)
+        code_verifier: base64URLEncode(verifier),
+        code_challenge_method: "S256"
       };
     } else {
       tokenRequest = {

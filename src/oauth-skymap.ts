@@ -97,11 +97,13 @@ export default class Oauth {
     this.promises.login = loader(this._grant.getloginUrl(), this.store.authConfig)
       .execute()
       .then(callbackUrl => {
+        this.promises.login = null;
         AuthDebug.log("callbackUrl", callbackUrl);
         return this.callback(callbackUrl);
       })
-      .finally(() => {
+      .catch(e => {
         this.promises.login = null;
+        throw e;
       });
     return this.promises.login;
   }

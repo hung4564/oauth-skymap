@@ -6,7 +6,7 @@ const oauth = new Oauth(
     redirect_url: "http://127.0.0.1:5501/example/callback.html"
   },
   {
-    providerUrl: "http://localhost:8000/"
+    providerUrl: "http://localhost:8000"
   }
 );
 let btnlogin = document.getElementById("login");
