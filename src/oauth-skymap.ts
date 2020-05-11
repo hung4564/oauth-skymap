@@ -4,36 +4,37 @@
 import AuthProfile from "./auth";
 import { AuthorizationCodeGrant, IGrant } from "./grant";
 import { LoaderFactory, TypeFLoaderEnum } from "./loader";
-import { IConfig, IOauthOption } from "./models";
-import { AuthStore } from "./store";
+import { IConfig, IOauthOption, IResponse } from "./models";
+import { AuthStore, StorageType } from "./store";
 import { AuthDebug, createUrl, epoch } from "./utils";
 export const defaultOauthOption: IOauthOption = {
   providerUrl: "http://localhost:8000",
   debug: true,
-  storageType: "local"
+  storageType: "local",
+  rememberme: true
 };
 export default class Oauth {
-  config!: IConfig;
   store!: AuthStore;
-  private promises: { login?: Promise<any> | null };
-  auth: AuthProfile;
+  private promises: { login?: Promise<IResponse | undefined> | null };
+  auth!: AuthProfile;
   private grants: IGrant[] = [];
   public providerUrl: string = "";
   private _grant!: IGrant;
-  constructor(config: IConfig, option: IOauthOption = defaultOauthOption) {
-    if (!config) {
+  constructor(config: IConfig, option: IOauthOption) {
+    this.promises = {};
+    this.setStore(option && option.storageType);
+    this.setOption(option || this.store.authOption);
+    this.setDefaultGrant();
+    this.setConfig(config || this.store.authConfig);
+    if (!this.store.authConfig) {
       throw new ReferenceError("A config must be provided.");
     }
-    this.promises = {};
-    this.auth = new AuthProfile({ providerUrl: option.providerUrl });
-    this.setOption(option);
-    this.setDefaultGrant();
-    this.setConfig(config);
   }
   setDefaultGrant() {
     this.grants.push(new AuthorizationCodeGrant(this.store, this.providerUrl));
   }
   setGrant(grant: IGrant) {
+    grant.setProviderUrl(this.providerUrl);
     this.grants.push(grant);
   }
   setOption(option: IOauthOption) {
@@ -41,13 +42,28 @@ export default class Oauth {
     AuthDebug.log("Set Oauth Option", option);
     this.providerUrl = option.providerUrl;
     this.grants.forEach(grant => grant.setProviderUrl(this.providerUrl));
-    AuthDebug.isDebug = option.debug;
-    if (this.store) this.store.clear();
-    this.store = new AuthStore({ storageType: option.storageType });
-    this.auth.setConfig({ providerUrl: option.providerUrl });
+    AuthDebug.isDebug = !!option.debug;
+    this.setStore(option.storageType);
+    this.store.authOption = option;
+    this.setAuth(option);
+  }
+  setStore(storageType: StorageType = "local") {
+    if (!this.store || this.store.storageType != storageType) {
+      this.store = new AuthStore({ storageType });
+      this.grants.forEach(grant => grant.setStore(this.store));
+      if (this.auth) this.auth.setStore(this.store);
+    }
+  }
+  setAuth(option: IOauthOption) {
+    if (this.auth) {
+      this.auth.setConfig({ providerUrl: option.providerUrl });
+    } else {
+      this.auth = new AuthProfile({ providerUrl: option.providerUrl }, this.store);
+    }
   }
   setConfig(config: IConfig) {
-    this.config = Object.assign({}, config);
+    AuthDebug.log("Set Oauth config", config);
+    this.store.authConfig = Object.assign({}, config);
     this._grant = this.getGrantHandle();
   }
   getloginUrl() {
@@ -55,18 +71,19 @@ export default class Oauth {
     let authorizeEndpoint = `${this.providerUrl}/oauth/authorize`;
     return createUrl(authorizeEndpoint, {
       state: this.store.localState,
-      response_type: this.config.response_type,
-      redirect_uri: this.config.redirect_url,
-      client_id: this.config.client_id,
-      scope: this.config.scope
+      response_type: this.store.authConfig.response_type,
+      redirect_uri: this.store.authConfig.redirect_url,
+      client_id: this.store.authConfig.client_id,
+      scope: this.store.authConfig.scope
     });
   }
   getGrantHandle() {
-    const grant = this.grants.find(x => x.canHandleRequest(this.config));
+    AuthDebug.log("Config when get grant", this.store.authConfig);
+    const grant = this.grants.find(x => x.canHandleRequest(this.store.authConfig));
     if (!grant) {
       throw new ReferenceError("Invaild response_type");
     }
-    grant.setConfig(this.config);
+    grant.setConfig(this.store.authConfig);
     return grant;
   }
   getLoaderHandle(type: TypeFLoaderEnum = "httpredirect") {
@@ -77,8 +94,7 @@ export default class Oauth {
       return this.promises.login;
     }
     const loader = this.getLoaderHandle(type);
-    this.store.clear();
-    this.promises.login = loader(this._grant.getloginUrl(), this.config)
+    this.promises.login = loader(this._grant.getloginUrl(), this.store.authConfig)
       .execute()
       .then(callbackUrl => {
         AuthDebug.log("callbackUrl", callbackUrl);
@@ -91,24 +107,30 @@ export default class Oauth {
   }
   async callback(data: any) {
     let response: any = null;
-    if (typeof data === "object") {
-      response = data;
-    } else if (typeof data === "string") {
-      response = this.store.parseParams(data);
-    } else if (typeof data === "undefined") {
-      response = this.store.parseParams(window.location.href);
-    } else {
-      // no response provided.
-      return;
+    if (!this.store.authConfig) {
+      this.setConfig(this.store.authConfig);
     }
+    let handle = handleCallback[typeof data];
+    if (!handle) {
+      throw new ReferenceError("Invaild data callback");
+    }
+    response = handle.handle(data, this.store);
     if (this.store.state != this.store.localState) {
       this.store.clear();
       throw new ReferenceError("Invaild request");
     }
     AuthDebug.log("Receving response in callback", response);
     const result = await this._grant.handleResponse(response);
-    this.auth.setToken(result);
+    this.setToken(result);
     this.store.clear();
     return result;
   }
+  setToken(result: any) {
+    this.store.passObject(result);
+  }
 }
+const handleCallback: { [key: string]: { handle: any } } = {
+  string: { handle: (data: any, store: AuthStore) => store.parseParams(data) },
+  undefined: { handle: (data: any, store: AuthStore) => store.parseParams(window.location.href) },
+  object: { handle: (data: any, store: AuthStore) => data }
+};

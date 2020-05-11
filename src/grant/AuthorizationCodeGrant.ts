@@ -1,3 +1,4 @@
+import jsSHA from "jssha";
 import { IConfig, IResponse } from "../models";
 import { AuthDebug, createUrl, epoch } from "../utils";
 import { AGrant } from "./IGrant";
@@ -7,16 +8,24 @@ export interface IAuthorizationCodeResponse extends IResponse {
 }
 export class AuthorizationCodeGrant extends AGrant {
   handleResponse(response: IAuthorizationCodeResponse) {
-    if (!this.config.client_secret) {
-      throw new Error("Configuration missing [client_secret]");
-    }
-    let tokenRequest = {
+    let tokenRequest: any = {
       grant_type: "authorization_code",
       code: response.code,
       redirect_uri: this.config.redirect_url,
-      client_id: this.config.client_id,
-      client_secret: this.config.client_secret
+      client_id: this.config.client_id
     };
+    if (!this.config.client_secret) {
+      let verifier = this._store.verifier;
+      tokenRequest = {
+        ...tokenRequest,
+        code_verifier: base64URLEncode(verifier)
+      };
+    } else {
+      tokenRequest = {
+        ...tokenRequest,
+        client_secret: this.config.client_secret
+      };
+    }
     AuthDebug.log("Receving tokenRequest in callback", tokenRequest);
     return fetch(`${this.providerUrl}/oauth/token`, {
       method: "post",
@@ -31,14 +40,28 @@ export class AuthorizationCodeGrant extends AGrant {
   }
   getloginUrl() {
     this._store.localState = epoch();
-    let authorizeEndpoint = `${this.providerUrl}/oauth/authorize`;
-    return createUrl(authorizeEndpoint, {
+    let tokenRequest: any = {
       state: this._store.localState,
       response_type: this.config.response_type,
       redirect_uri: this.config.redirect_url,
       client_id: this.config.client_id,
       scope: this.config.scope
-    });
+    };
+    if (!this.config.client_secret) {
+      let verifier = generateCodeVerifier();
+      const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
+      shaObj.update(verifier);
+      let challenge = shaObj.getHash("B64");
+      this._store.verifier = verifier;
+      this._store.challenge = challenge;
+      tokenRequest = {
+        ...tokenRequest,
+        code_challenge: base64URLEncode(challenge),
+        code_challenge_method: "S256"
+      };
+    }
+    let authorizeEndpoint = `${this.providerUrl}/oauth/authorize`;
+    return createUrl(authorizeEndpoint, tokenRequest);
   }
   canHandleRequest(config: IConfig) {
     return config.response_type == "code";
@@ -53,3 +76,21 @@ const encodeQS = function(params: any) {
   }
   return res;
 };
+function generateCodeVerifier() {
+  return generateRandomString(128);
+}
+function generateRandomString(length: number) {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  for (var i = 0; i < length; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+function base64URLEncode(str: any) {
+  return str
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+}

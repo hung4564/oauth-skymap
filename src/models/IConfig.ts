@@ -9,8 +9,9 @@ export interface IConfig {
 }
 export interface IOauthOption {
   providerUrl: string;
-  debug: boolean;
-  storageType: StorageType;
+  debug?: boolean;
+  storageType?: StorageType;
+  rememberme?: boolean;
 }
 export interface IResponse {
   access_token: string;

@@ -1,4 +1,4 @@
-import { IResponse } from "./models";
+import { AuthStore } from "./store";
 import { AuthDebug } from "./utils";
 export interface IAuthConfig {
   providerUrl: string;
@@ -6,22 +6,18 @@ export interface IAuthConfig {
   vaildUrl?: string;
 }
 export class AuthProfile {
-  constructor(private _option: IAuthConfig) {
-    AuthDebug.log("Set  auth Option", _option);
+  constructor(private _option: IAuthConfig, private _store: AuthStore) {
+    AuthDebug.log("Set auth Option", _option);
   }
   setConfig(_option: IAuthConfig) {
-    AuthDebug.log("Set  auth Option", _option);
+    AuthDebug.log("Set auth Option", _option);
     this._option = _option;
   }
-  setToken(response: IResponse) {
-    AuthDebug.log("Set token response", response);
-    setCookie("access_token", response.access_token, response.expires_in);
-    if (response.refresh_token) {
-      setCookie("refresh_token", response.refresh_token, response.expires_in);
-    }
+  setStore(_store: AuthStore) {
+    this._store = _store;
   }
   getToken() {
-    let access_token = getCookie("access_token");
+    let access_token = this._store.accessToken;
     if (!access_token) {
       throw new Error("missing [access_token]");
     }
@@ -53,24 +49,3 @@ export class AuthProfile {
   }
 }
 export default AuthProfile;
-function setCookie(cname: string, cvalue: string, exdays: number) {
-  var d = new Date();
-  d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
-  var expires = "expires=" + d.toUTCString();
-  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-}
-function getCookie(cname: string) {
-  var name = cname + "=";
-  var decodedCookie = decodeURIComponent(document.cookie);
-  var ca = decodedCookie.split(";");
-  for (var i = 0; i < ca.length; i++) {
-    var c = ca[i];
-    while (c.charAt(0) == " ") {
-      c = c.substring(1);
-    }
-    if (c.indexOf(name) == 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-  return "";
-}

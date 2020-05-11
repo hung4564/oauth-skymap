@@ -8,6 +8,7 @@ export class AuthDebug {
 }
 export function createUrl(baseUrl: string, queryParams: { [key: string]: any } = {}) {
   let url = baseUrl;
+  AuthDebug.log("utilt -> createUrl -> params", queryParams);
   Object.keys(queryParams).forEach(key => {
     const value = queryParams[key];
     if ([undefined, null, ""].indexOf(value) === -1) {

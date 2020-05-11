@@ -8,6 +8,7 @@ export interface IGrant {
   getloginUrl(): string;
   vaildConfig(config: IConfig): void;
   setConfig(config: IConfig): void;
+  setStore(_store: AuthStore): void;
   setProviderUrl(url: string): void;
 }
 export abstract class AGrant implements IGrant {
@@ -20,6 +21,9 @@ export abstract class AGrant implements IGrant {
   setConfig(config: IConfig) {
     this.vaildConfig(config);
     this.config = config;
+  }
+  setStore(_store: AuthStore) {
+    this._store = _store;
   }
   vaildConfig(config: IConfig) {
     if (!config.client_id) {
