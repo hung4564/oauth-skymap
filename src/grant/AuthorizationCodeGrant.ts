@@ -18,8 +18,7 @@ export class AuthorizationCodeGrant extends AGrant {
       let verifier = this._store.verifier;
       tokenRequest = {
         ...tokenRequest,
-        code_verifier: base64URLEncode(verifier),
-        code_challenge_method: "S256"
+        code_verifier: base64URLEncode(verifier)
       };
     } else {
       tokenRequest = {
@@ -50,15 +49,25 @@ export class AuthorizationCodeGrant extends AGrant {
     };
     if (!this.config.client_secret) {
       let verifier = generateCodeVerifier();
-      const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
-      shaObj.update(verifier);
-      let challenge = shaObj.getHash("B64");
-      this._store.verifier = verifier;
-      this._store.challenge = challenge;
+      if (!["S256", "plaint"].includes(this.config.code_challenge_method)) {
+        throw new ReferenceError(
+          `Not support code challenge method ${this.config.code_challenge_method}`
+        );
+      }
+      if (this.config.code_challenge_method == "S256") {
+        const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
+        shaObj.update(verifier);
+        let challenge = shaObj.getHash("B64", { b64Pad: "=" });
+        this._store.verifier = verifier;
+        this._store.challenge = challenge;
+      } else {
+        this._store.verifier = verifier;
+        this._store.challenge = verifier;
+      }
       tokenRequest = {
         ...tokenRequest,
-        code_challenge: base64URLEncode(challenge),
-        code_challenge_method: "S256"
+        code_challenge: base64URLEncode(this._store.challenge),
+        code_challenge_method: this.config.code_challenge_method
       };
     }
     let authorizeEndpoint = `${this.providerUrl}/oauth/authorize`;
