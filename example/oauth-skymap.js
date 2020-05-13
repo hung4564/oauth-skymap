@@ -246,7 +246,7 @@ var AuthorizationCodeGrant = /** @class */ (function (_super) {
         };
         if (!this.config.client_secret) {
             var verifier = this._store.verifier;
-            tokenRequest = __assign(__assign({}, tokenRequest), { code_verifier: base64URLEncode(verifier) });
+            tokenRequest = __assign(__assign({}, tokenRequest), { code_verifier: Base64EncodeUrl(verifier || "") });
         }
         else {
             tokenRequest = __assign(__assign({}, tokenRequest), { client_secret: this.config.client_secret });
@@ -288,7 +288,7 @@ var AuthorizationCodeGrant = /** @class */ (function (_super) {
                 this._store.verifier = verifier;
                 this._store.challenge = verifier;
             }
-            tokenRequest = __assign(__assign({}, tokenRequest), { code_challenge: base64URLEncode(this._store.challenge), code_challenge_method: this.config.code_challenge_method });
+            tokenRequest = __assign(__assign({}, tokenRequest), { code_challenge: Base64EncodeUrl(this._store.challenge), code_challenge_method: this.config.code_challenge_method });
         }
         var authorizeEndpoint = this.providerUrl + "/oauth/authorize";
         return createUrl(authorizeEndpoint, tokenRequest);
@@ -317,12 +317,11 @@ function generateRandomString(length) {
     }
     return text;
 }
-function base64URLEncode(str) {
+function Base64EncodeUrl(str) {
     return str
-        .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
-        .replace(/=/g, "");
+        .replace(/\=+$/, "");
 }
 
 var ALoader = /** @class */ (function () {

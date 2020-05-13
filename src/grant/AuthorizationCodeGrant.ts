@@ -18,7 +18,7 @@ export class AuthorizationCodeGrant extends AGrant {
       let verifier = this._store.verifier;
       tokenRequest = {
         ...tokenRequest,
-        code_verifier: base64URLEncode(verifier)
+        code_verifier: Base64EncodeUrl(verifier || "")
       };
     } else {
       tokenRequest = {
@@ -66,7 +66,7 @@ export class AuthorizationCodeGrant extends AGrant {
       }
       tokenRequest = {
         ...tokenRequest,
-        code_challenge: base64URLEncode(this._store.challenge),
+        code_challenge: Base64EncodeUrl(this._store.challenge),
         code_challenge_method: this.config.code_challenge_method
       };
     }
@@ -97,10 +97,9 @@ function generateRandomString(length: number) {
   }
   return text;
 }
-function base64URLEncode(str: any) {
+function Base64EncodeUrl(str: string) {
   return str
-    .toString("base64")
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
-    .replace(/=/g, "");
+    .replace(/\=+$/, "");
 }

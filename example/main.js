@@ -2,7 +2,7 @@ import Oauth from "./oauth-skymap.js";
 const oauth = new Oauth(
   {
     response_type: "code",
-    client_id: "238e7b70-92d5-11ea-9632-c9f257edcfba",
+    client_id: "71efe6f0-9407-11ea-872a-3b2a3bbfb478",
     redirect_url: "http://127.0.0.1:5501/example/callback.html",
     code_challenge_method: "plain"
   },
