@@ -1,4 +1,4 @@
-import Oauth from "/dist/oauth-skymap.es5.js";
+import Oauth from "./oauth-skymap.js";
 const oauth = new Oauth();
 oauth.callback().then(res => {
   console.log("res", res);

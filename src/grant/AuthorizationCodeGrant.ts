@@ -49,7 +49,7 @@ export class AuthorizationCodeGrant extends AGrant {
     };
     if (!this.config.client_secret) {
       let verifier = generateCodeVerifier();
-      if (!["S256", "plaint"].includes(this.config.code_challenge_method)) {
+      if (!["S256", "plain"].includes(this.config.code_challenge_method)) {
         throw new ReferenceError(
           `Not support code challenge method ${this.config.code_challenge_method}`
         );
