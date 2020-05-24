@@ -131,6 +131,7 @@ export default class Oauth {
     this.store.passObject(result);
   }
 }
+export * from "./grant";
 const handleCallback: { [key: string]: { handle: any } } = {
   string: { handle: (data: any, store: AuthStore) => store.parseParams(data) },
   undefined: { handle: (data: any, store: AuthStore) => store.parseParams(window.location.href) },
