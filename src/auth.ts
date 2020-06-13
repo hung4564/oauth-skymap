@@ -1,6 +1,7 @@
 import { AuthStore } from "./store";
 import { AuthDebug } from "./utils";
 export interface IAuthConfig {
+  logOutUrl?: string;
   providerUrl: string;
   profileUrl?: string;
   vaildUrl?: string;
@@ -30,6 +31,22 @@ export class AuthProfile {
     const res = await fetch(url, {
       method: "get",
       headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${access_token}`
+      }
+    });
+    return await res.json();
+  }
+  async logOut(access_token?: string) {
+    access_token = access_token || this.getToken();
+    AuthDebug.log("logout access_token", access_token);
+    let url = this._option.logOutUrl || `${this._option.providerUrl}/api/logout`;
+    const res = await fetch(url, {
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
         Authorization: `Bearer ${access_token}`
       }
     });

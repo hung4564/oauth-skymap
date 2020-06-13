@@ -2,12 +2,12 @@ import Oauth from "./oauth-skymap.js";
 const oauth = new Oauth(
   {
     response_type: "code",
-    client_id: "71efe6f0-9407-11ea-872a-3b2a3bbfb478",
-    redirect_url: "http://127.0.0.1:5501/example/callback.html",
+    client_id: "897ea160-9dc0-11ea-915b-c7a3cabfc460",
+    redirect_url: "http://127.0.0.1:5645/example/callback.html",
     code_challenge_method: "plain"
   },
   {
-    providerUrl: "http://oauth2.howizbiz.com"
+    providerUrl: "http://localhost:8000"
   }
 );
 let btnlogin = document.getElementById("login");

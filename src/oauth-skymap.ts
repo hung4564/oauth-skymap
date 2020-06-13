@@ -15,7 +15,9 @@ export const defaultOauthOption: IOauthOption = {
 };
 export default class Oauth {
   store!: AuthStore;
-  private promises: { login?: Promise<IResponse | undefined> | null };
+  private promises: {
+    login?: Promise<IResponse | undefined> | null;
+  };
   auth!: AuthProfile;
   private grants: IGrant[] = [];
   public providerUrl: string = "";
