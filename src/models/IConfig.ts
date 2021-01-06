@@ -6,7 +6,7 @@ export interface IConfig {
   redirect_url: string;
   scope: string;
   client_secret?: string;
-  code_challenge_method: "S256" | "plain";
+  code_challenge_method?: "S256" | "plain";
 }
 export interface IOauthOption {
   providerUrl: string;

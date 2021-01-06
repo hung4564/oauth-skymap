@@ -52,11 +52,15 @@ export class AuthProfile {
     });
     return await res.json();
   }
-  async vaildToken() {
+  async validateToken(scopes: any) {
     let access_token = this.getToken();
     AuthDebug.log("profile access_token", access_token);
     let url = this._option.vaildUrl || `${this._option.providerUrl}/api/validate-token`;
-    const res = await fetch(url, {
+    let params: any = { scopes };
+    let query = Object.keys(params)
+      .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(params[k]))
+      .join("&");
+    const res = await fetch(url + "?" + query, {
       method: "get",
       headers: {
         Authorization: `Bearer ${access_token}`

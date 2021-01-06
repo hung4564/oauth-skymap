@@ -13,7 +13,12 @@ export interface IGrant {
 }
 export abstract class AGrant implements IGrant {
   protected config!: IConfig;
-  constructor(protected _store: AuthStore, protected providerUrl: string) {}
+  protected _store!: AuthStore;
+  protected providerUrl!: string;
+  constructor(_store?: AuthStore, providerUrl?: string) {
+    if (_store) this.setStore(_store);
+    if (providerUrl) this.setProviderUrl(providerUrl);
+  }
   abstract canHandleResponse(data: IResponse): boolean;
   abstract handleResponse(data: IResponse): Promise<IResponse>;
   abstract canHandleRequest(config: IConfig): boolean;

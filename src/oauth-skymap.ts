@@ -2,7 +2,8 @@
 // import "core-js/fn/array.find"
 // ...
 import AuthProfile from "./auth";
-import { AuthorizationCodeGrant, IGrant } from "./grant";
+import { AuthorizationCodePKCEGrant, IGrant } from "./grant";
+import { AuthorizationCodeGrant } from "./grant/AuthorizationCodeGrant";
 import { LoaderFactory, TypeFLoaderEnum } from "./loader";
 import { IConfig, IOauthOption, IResponse } from "./models";
 import { AuthStore, StorageType } from "./store";
@@ -24,18 +25,20 @@ export default class Oauth {
   private _grant!: IGrant;
   constructor(config: IConfig, option: IOauthOption) {
     this.promises = {};
+    this.setDefaultGrant();
     this.setStore(option && option.storageType);
     this.setOption(option || this.store.authOption);
-    this.setDefaultGrant();
     this.setConfig(config || this.store.authConfig);
     if (!this.store.authConfig) {
       throw new ReferenceError("A config must be provided.");
     }
   }
   setDefaultGrant() {
-    this.grants.push(new AuthorizationCodeGrant(this.store, this.providerUrl));
+    this.setGrant(new AuthorizationCodePKCEGrant());
+    this.setGrant(new AuthorizationCodeGrant());
   }
   setGrant(grant: IGrant) {
+    grant.setStore(this.store);
     grant.setProviderUrl(this.providerUrl);
     this.grants.push(grant);
   }
@@ -82,6 +85,9 @@ export default class Oauth {
   getGrantHandle() {
     AuthDebug.log("Config when get grant", this.store.authConfig);
     const grant = this.grants.find(x => x.canHandleRequest(this.store.authConfig));
+
+    AuthDebug.log("Grants have when check", this.grants);
+    AuthDebug.log("Grant get", grant);
     if (!grant) {
       throw new ReferenceError("Invaild response_type");
     }
